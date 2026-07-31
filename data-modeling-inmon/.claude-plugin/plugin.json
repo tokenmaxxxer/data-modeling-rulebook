@@ -1,0 +1,7 @@
+{
+  "name": "data-modeling-inmon",
+  "description": "Inmon/3NF methodology gate for the data-modeling role: when a proposal or record names Inmon/3NF as the chosen methodology, enforces the normalization-specific content (intended normalization target form in proposals, stated normalization deviations or an explicit no-deviations statement in records). Silent no-op when Inmon/3NF wasn't the methodology picked; the always-on data-modeling-structure gate already requires some methodology-fit token to be present.",
+  "author": {
+    "name": "Jung Jiwon & Lee Jongkwan"
+  }
+}

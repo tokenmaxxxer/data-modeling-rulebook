@@ -8,6 +8,26 @@
       "name": "data-modeling",
       "source": "./data-modeling",
       "description": "The data-modeling role on contract v3 (issue-160 round-3 promotion). Decides: 데이터를 어떤 관계/스키마로 모델링할지."
+    },
+    {
+      "name": "data-modeling-structure",
+      "source": "./data-modeling-structure",
+      "description": "Methodology-agnostic phase-shape gate: required proposal/record sections regardless of which methodology fits."
+    },
+    {
+      "name": "data-modeling-inmon",
+      "source": "./data-modeling-inmon",
+      "description": "Inmon/3NF methodology content gate: normalization target in proposals, normalization deviations (or explicit none) in records."
+    },
+    {
+      "name": "data-modeling-kimball",
+      "source": "./data-modeling-kimball",
+      "description": "Kimball dimensional/star-schema methodology content gate: grain statement in proposals, fact/dimension split in records."
+    },
+    {
+      "name": "data-modeling-datavault",
+      "source": "./data-modeling-datavault",
+      "description": "Data Vault methodology content gate: hub/satellite/link + auditability rationale in proposals, hub/satellite/link named in records."
     }
   ]
 }
