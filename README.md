@@ -15,19 +15,26 @@ generated as skeleton scaffolding by issue-170.
 ```
 claude plugin marketplace add tokenmaxxxer/data-modeling-rulebook
 claude plugin install data-modeling
+claude plugin install warrant@tokenmaxxxer-core
 ```
 
 ## Layout
 
 - `data-modeling/.claude-plugin/plugin.json` — plugin manifest
-- `data-modeling/hooks/hooks.json` — SessionStart + PreToolUse wiring
-- `data-modeling/hooks/directive.sh` — SessionStart role directive
-- `data-modeling/hooks/record-fields-gate.sh` — this role's record required-field gate
-- `data-modeling/hooks/trailer-gate.sh` — commit `Subject: issue-<n>` trailer gate
-- `data-modeling/hooks/handbook-trigger-gate.sh` — s21 handbook-sync gate
-- `data-modeling/agents/warrant-hunter.md` — rotating-stance hunt agent
+- `data-modeling/hooks/hooks.json` — SessionStart wiring
+- `data-modeling/hooks/directive.sh` — SessionStart role directive (core-canon stub)
 - `docs/specs/approvers.md` — Approve-authority allowlist (see below)
+
+The role-agnostic gates (trailer/record-fields/handbook-trigger) and the
+warrant-hunt agent are core canon now (core issue #63/#66): fired/installed
+globally by `core@tokenmaxxxer-core` and `warrant@tokenmaxxxer-core` — this
+repo carries no local copy of either.
 
 This is scaffolding, not a finished rulebook: fill in doctrine detail,
 handoff enforcement, and any role-specific progress gate before treating
 it as load-bearing.
+
+BOUNDARY CASE: if the work in front of you drifts outside `decides` above,
+stop and hand off per the arrow — do not silently absorb another role's
+scope. Record the hand-off point in this role's record before opening the
+next role's session.
