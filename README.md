@@ -6,9 +6,27 @@ generated as skeleton scaffolding by issue-170.
 
 - **decides**: 데이터를 어떤 관계/스키마로 모델링할지
 - **use_when**: 스키마 신설/변경이 걸릴 때
-- **produces**: schema/ERD, migration plan, normalization rationale
+- **produces**: conceptual/logical/physical model, ERD, data dictionary,
+  normalization rationale (target form + deviations), migration plan
+  (with rollback path)
 - **write_scope**: ["src/**"] (migrations only)
 - **hand-off**: 파이프라인 이동/변환이 걸리면 → data-engineering
+
+## Methodology
+
+Phase-1 proposals for schema/relationship decisions must name which row
+applies and why (see `docs/issue-1/proposals/rulebook-maturation.md`):
+
+| Decision shape | Methodology |
+|---|---|
+| OLTP / transactional schema, single source of truth | 3NF-normalized, Inmon-style subject-oriented modeling |
+| Analytics / reporting / BI consumption | Kimball dimensional modeling (star/snowflake, fact + dimension tables) |
+| Raw multi-source ingestion, heavy schema evolution, auditability requirement | Data Vault (hubs/links/satellites) |
+
+Every phase-2 deliverable must produce conceptual, logical, and physical
+model artifacts (or an explicit, justified statement of which layer(s) a
+specific change doesn't touch) — a deliverable that jumps straight to
+physical DDL with no conceptual/logical trace does not satisfy this norm.
 
 ## Install
 
