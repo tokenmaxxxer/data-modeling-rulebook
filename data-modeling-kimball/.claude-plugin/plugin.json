@@ -1,0 +1,7 @@
+{
+  "name": "data-modeling-kimball",
+  "description": "Kimball dimensional-modeling / star-schema methodology check for the data-modeling role: fires only when the proposal or record content names the Kimball methodology (kimball, dimensional model, star schema), then requires a grain statement in proposals and a fact/dimension table split in records. Shape checks common to every methodology live in data-modeling-structure.",
+  "author": {
+    "name": "Jung Jiwon & Lee Jongkwan"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "data-modeling-datavault",
+  "description": "Data Vault methodology content gate for the data-modeling role: when a proposal or record names Data Vault as the chosen approach, enforces that hub/satellite/link structures are named and, in proposals, that an auditability or schema-drift rationale is present. Fires on every proposal/record write but only acts when the Data Vault token is present; the methodology-agnostic phase-shape check lives in data-modeling-structure.",
+  "author": {
+    "name": "Jung Jiwon & Lee Jongkwan"
+  }
+}

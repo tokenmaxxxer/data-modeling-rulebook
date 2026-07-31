@@ -1,0 +1,7 @@
+{
+  "name": "data-modeling-structure",
+  "description": "Methodology-agnostic phase-shape gate for the data-modeling role: enforces the step order and required sections every proposal/record must carry regardless of which methodology (Inmon/Kimball/Data Vault) fits the decision. Fires on every proposal/record write; methodology-specific content is delegated to the matching data-modeling-{inmon,kimball,datavault} plugin.",
+  "author": {
+    "name": "Jung Jiwon & Lee Jongkwan"
+  }
+}
