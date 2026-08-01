@@ -26,12 +26,17 @@ non-zero if any suite fails and prints which one.
 `tests/run-all-gate-tests.sh` itself) resolves `CLAUDE_PLUGIN_ROOT_CORE` for
 standalone test runs — an already-exported value first (a real install or a
 developer's own local `core` checkout), else a one-time shallow clone of
-`tokenmaxxxer-core` into a cache directory. The `compliance-check.sh` step
-prints a warning and is skipped (not a failure) rather than blocking the
-suite when neither resolves — the compliance check is best-effort in an
-offline/no-core-clone dev environment, while the gate scripts' own runtime
-behavior always depends on `CLAUDE_PLUGIN_ROOT_CORE` being set by a real
-plugin install.
+`tokenmaxxxer-core` into a cache directory. If neither resolves,
+`run-all-gate-tests.sh` now **fails loud** (issue-13 §4): a run where
+`compliance-check.sh` never executed cannot print `all suites passed` /
+exit 0 — "best-effort" no longer means "silently skip and still call it
+green." A genuinely offline dev environment must export a pre-resolved
+`CLAUDE_PLUGIN_ROOT_CORE` (or allow `resolve-core.sh`'s network clone) to
+get a passing run. `tests/missing-core-test.sh` is the dedicated,
+separately-invoked test for this fail-path (stubs `CLAUDE_PLUGIN_ROOT_CORE`
+to a nonexistent path and asserts non-zero exit) — it is not part of the
+default `run-all-gate-tests.sh` run, so the missing-core path is exercised
+on its own rather than as the default (real-core) run path.
 
 ## Adding a plugin's suite to the aggregator
 
@@ -54,14 +59,21 @@ reference-only, never vendored — `core/hooks/lib/gate-lib.sh` /
 - reads the tool-call JSON from stdin; malformed JSON (truncated,
   non-object top level, empty payload) fails closed via
   `gate_lib.gate_parse_json_or_deny`.
-- fires on `Write`, `Edit`, and `MultiEdit` (`hooks.json` matcher
-  `Write|Edit|MultiEdit`); the resulting content is reconstructed via
+- fires on `Write`, `Edit`, `MultiEdit`, and `Bash` (`hooks.json` matcher
+  `Write|Edit|MultiEdit|Bash`, widened issue-13 §2). For `Write`/`Edit`/
+  `MultiEdit`, the resulting content is reconstructed via
   `gate_lib.gate_reconstruct_write`, which honors each `Edit`/`MultiEdit`
   edit's own `replace_all` flag rather than reading only
   `tool_input.content` (a `Write`-only read would miss `Edit`/`MultiEdit`
-  entirely). `Bash`-tool writes are out of these gates' tool scope
-  (pass through) — see the open question in
-  `docs/issue-10/proposals/gate-remediation.md` §2b.
+  entirely). For `Bash`, `gate_lib.gate_bash_write_targets` token-scans
+  `tool_input.command`; if any token normalizes to an in-scope path the
+  write is denied outright (content-blind — a Bash command's resulting
+  content cannot be reconstructed the way Write/Edit's structured
+  `tool_input` can), with a message distinguishing this from the generic
+  reconstruction-failure deny. A `NotebookEdit` allowlist entry/
+  `notebook_path` fallback existed pre-issue-13 but was never reachable
+  (this repo's in-scope surfaces are never notebooks) and has been
+  removed rather than kept as dead code.
 - path-scoped via `gate_lib.gate_normalize_path` (absolute, relative, and
   `./`-prefixed paths to the same file match identically): only acts on
   `docs/issue-*/proposals/*.md` (proposal mode) or

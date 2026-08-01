@@ -110,7 +110,22 @@ write_case "absolute file_path matches the same scope a relative fixture matches
 write_case "./-prefixed file_path matches the same scope" "./docs/issue-9/proposals/foo.md" "$GOOD_PROPOSAL" 0
 
 bash_payload="$(jq -n --arg cmd 'echo bad >> docs/issue-9/proposals/foo.md' '{tool_name:"Bash", tool_input:{command:$cmd}}')"
-run_raw "Bash-tool file write is out of this gate's tool scope (passes through)" 0 "$bash_payload"
+run_raw "Bash write reaching an in-scope path is denied (content-blind)" 2 "$bash_payload"
+
+bash_oos_payload="$(jq -n --arg cmd 'echo ok >> src/app.py' '{tool_name:"Bash", tool_input:{command:$cmd}}')"
+run_raw "Bash write to an out-of-scope path still passes through" 0 "$bash_oos_payload"
+
+if [ -n "${CLAUDE_PLUGIN_ROOT_CORE:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT_CORE/hooks/tests/compliance-check.sh" ]; then
+  if bash "$CLAUDE_PLUGIN_ROOT_CORE/hooks/tests/compliance-check.sh" "$DIR/.."; then
+    echo "ok: compliance-check.sh clean against this plugin"
+  else
+    echo "FAIL: compliance-check.sh reported violations"
+    fail=1
+  fi
+else
+  echo "FAIL: CLAUDE_PLUGIN_ROOT_CORE unresolved — cannot run compliance-check.sh"
+  fail=1
+fi
 
 if [ "$fail" = "1" ]; then
   echo "datavault-gate-tests: FAILED"
