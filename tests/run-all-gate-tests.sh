@@ -16,7 +16,8 @@ if [ -n "${CLAUDE_PLUGIN_ROOT_CORE:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT_CORE/hooks
     fi
   done
 else
-  echo "run-all-gate-tests: WARNING — CLAUDE_PLUGIN_ROOT_CORE unresolved, skipping compliance-check.sh (core canon unavailable)" >&2
+  echo "run-all-gate-tests: FAILED — CLAUDE_PLUGIN_ROOT_CORE unresolved, cannot run compliance-check.sh (core canon unavailable); export a pre-resolved CLAUDE_PLUGIN_ROOT_CORE or allow tests/resolve-core.sh's network clone" >&2
+  fail=1
 fi
 
 for suite in \

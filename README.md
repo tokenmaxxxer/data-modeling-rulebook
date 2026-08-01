@@ -55,9 +55,11 @@ Five plugins, each independently installable/kill-switchable
   - `hooks/hooks.json` — `SessionStart` wiring
   - `hooks/directive.sh` — `SessionStart` role directive (core-canon stub)
 - `data-modeling-structure/` — methodology-agnostic phase-shape gate.
-  - `hooks/structure-gate.sh` — `PreToolUse` on `Write|Edit|MultiEdit`,
+  - `hooks/structure-gate.sh` — `PreToolUse` on `Write|Edit|MultiEdit|Bash`,
     scoped to `docs/issue-<n>/proposals/*.md` and
-    `docs/issue-<n>/reports/data-modeling.md`. Kill switch:
+    `docs/issue-<n>/reports/data-modeling.md`. A `Bash` write reaching an
+    in-scope path is content-blind: denied outright (use Write/Edit
+    instead), never reconstructed-and-checked. Kill switch:
     `DATA_MODELING_STRUCTURE_GATE_OFF`.
 - `data-modeling-inmon/` — Inmon/3NF methodology content gate (fires only
   when the write names `inmon`/`3nf`).

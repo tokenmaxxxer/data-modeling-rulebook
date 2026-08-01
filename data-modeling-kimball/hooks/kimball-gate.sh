@@ -15,7 +15,7 @@
 #     other value, including a typo, keeps it active
 #   - built on core's gate-house standard library (issue-72 canon,
 #     reference-only, never vendored): gate-lib.sh/gate-lib.py
-. "${CLAUDE_PLUGIN_ROOT_CORE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../core" && pwd -P)}/hooks/lib/gate-lib.sh"
+. "${CLAUDE_PLUGIN_ROOT_CORE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../core" && pwd -P)}/hooks/lib/gate-lib.sh" || { echo "kimball-gate.sh: cannot source gate-lib.sh" >&2; exit 2; }
 gate_trap_fail_closed
 set -uo pipefail
 
@@ -47,22 +47,48 @@ try:
 
     tool = ev.get("tool_name")
     ti = ev.get("tool_input")
-    if tool not in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+    if tool not in ("Write", "Edit", "MultiEdit", "Bash"):
         sys.exit(0)
     if not isinstance(ti, dict):
         deny("tool_input is missing or not a JSON object; cannot evaluate an in-scope write.")
 
-    p = ti.get("file_path") or ti.get("notebook_path")
+    root = os.environ["GATE_ROOT"]
+
+    def in_scope(rel):
+        is_p = bool(re.match(r'^docs/issue-[0-9]+/proposals/.+\.md$', rel))
+        is_r = bool(re.match(r'^docs/issue-[0-9]+/reports/data-modeling\.md$', rel))
+        return is_p, is_r
+
+    if tool == "Bash":
+        command = ti.get("command")
+        if not isinstance(command, str) or not command:
+            sys.exit(0)
+        hit_rel = None
+        for token in gate_lib.gate_bash_write_targets(command):
+            rel_tok = gate_lib.gate_normalize_path(root, token)
+            if rel_tok is None:
+                continue
+            is_p, is_r = in_scope(rel_tok)
+            if is_p or is_r:
+                hit_rel = rel_tok
+                break
+        if hit_rel is None:
+            sys.exit(0)
+        deny(
+            "this Bash command reaches %s, an in-scope path, but a Bash write is "
+            "content-blind to this gate — use Write/Edit for in-scope docs, not a Bash "
+            "redirect." % hit_rel
+        )
+
+    p = ti.get("file_path")
     if not isinstance(p, str) or not p:
         sys.exit(0)
 
-    root = os.environ["GATE_ROOT"]
     rel = gate_lib.gate_normalize_path(root, p)
     if rel is None:
         sys.exit(0)
 
-    is_proposal = bool(re.match(r'^docs/issue-[0-9]+/proposals/.+\.md$', rel))
-    is_record = bool(re.match(r'^docs/issue-[0-9]+/reports/data-modeling\.md$', rel))
+    is_proposal, is_record = in_scope(rel)
     if not (is_proposal or is_record):
         sys.exit(0)
 
