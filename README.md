@@ -33,24 +33,56 @@ physical DDL with no conceptual/logical trace does not satisfy this norm.
 ```
 claude plugin marketplace add tokenmaxxxer/data-modeling-rulebook
 claude plugin install data-modeling
+claude plugin install data-modeling-structure
+claude plugin install data-modeling-inmon
+claude plugin install data-modeling-kimball
+claude plugin install data-modeling-datavault
+claude plugin install core@tokenmaxxxer-core
 claude plugin install warrant@tokenmaxxxer-core
 ```
 
+`core@tokenmaxxxer-core` is a hard dependency of the four gate plugins below
+(they source `core/hooks/lib/gate-lib.sh` — never vendored locally, per
+`docs/handbooks/canon-scripts.md`) — install it before enabling any gate.
+
 ## Layout
 
-- `data-modeling/.claude-plugin/plugin.json` — plugin manifest
-- `data-modeling/hooks/hooks.json` — SessionStart wiring
-- `data-modeling/hooks/directive.sh` — SessionStart role directive (core-canon stub)
+Five plugins, each independently installable/kill-switchable
+(`.claude-plugin/marketplace.json`):
+
+- `data-modeling/` — the role itself.
+  - `.claude-plugin/plugin.json` — plugin manifest
+  - `hooks/hooks.json` — `SessionStart` wiring
+  - `hooks/directive.sh` — `SessionStart` role directive (core-canon stub)
+- `data-modeling-structure/` — methodology-agnostic phase-shape gate.
+  - `hooks/structure-gate.sh` — `PreToolUse` on `Write|Edit|MultiEdit`,
+    scoped to `docs/issue-<n>/proposals/*.md` and
+    `docs/issue-<n>/reports/data-modeling.md`. Kill switch:
+    `DATA_MODELING_STRUCTURE_GATE_OFF`.
+- `data-modeling-inmon/` — Inmon/3NF methodology content gate (fires only
+  when the write names `inmon`/`3nf`).
+  - `hooks/inmon-gate.sh`. Kill switch: `DATA_MODELING_INMON_GATE_OFF`.
+- `data-modeling-kimball/` — Kimball dimensional/star-schema methodology
+  content gate (fires only when the write names
+  `kimball`/`dimensional model`/`star schema`).
+  - `hooks/kimball-gate.sh`. Kill switch: `DATA_MODELING_KIMBALL_GATE_OFF`.
+- `data-modeling-datavault/` — Data Vault methodology content gate (fires
+  only when the write names `data vault`).
+  - `hooks/datavault-gate.sh`. Kill switch: `DATA_MODELING_DATAVAULT_GATE_OFF`.
 - `docs/specs/approvers.md` — Approve-authority allowlist (see below)
+- `tests/run-all-gate-tests.sh` — aggregator: runs all four gate plugins'
+  own test suites plus core's `compliance-check.sh` against each
+  (`docs/handbooks/run-all-gate-tests.md`).
+
+Every kill switch above recognizes only `1`/`true`/`yes`/`on`
+(case-insensitive) as "disable" — any other value, including a typo, keeps
+the gate active (gate-house standard, core issue-72).
 
 The role-agnostic gates (trailer/record-fields/handbook-trigger) and the
-warrant-hunt agent are core canon now (core issue #63/#66): fired/installed
+warrant-hunt agent are core canon (core issue #63/#66): fired/installed
 globally by `core@tokenmaxxxer-core` and `warrant@tokenmaxxxer-core` — this
-repo carries no local copy of either.
-
-This is scaffolding, not a finished rulebook: fill in doctrine detail,
-handoff enforcement, and any role-specific progress gate before treating
-it as load-bearing.
+repo carries no local copy of either, nor of `gate-lib.sh`/`gate-lib.py`
+(canon-reference-only, never vendored).
 
 BOUNDARY CASE: if the work in front of you drifts outside `decides` above,
 stop and hand off per the arrow — do not silently absorb another role's
