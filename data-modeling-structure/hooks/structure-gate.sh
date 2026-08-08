@@ -176,6 +176,25 @@ try:
         if re.search(r'\bpipeline\b|\betl\b', low):
             if not adjacent(r'hand-off', r'data-engineering', window=3):
                 missing.append("decides-boundary: pipeline/ETL movement mentioned without a hand-off note to data-engineering within the same paragraph or nearby lines")
+        if not re.search(r'^\s*table_name\s*:', new_text, re.I | re.M):
+            missing.append("table_name (required record field, labeled line 'table_name: ...')")
+        tt = re.search(r'^\s*table_type\s*:\s*(\S+)', new_text, re.I | re.M)
+        if not tt:
+            missing.append("table_type (required record field, labeled line 'table_type: fact|dimension|n/a')")
+        elif tt.group(1).strip().lower() not in ("fact", "dimension", "n/a"):
+            # fact/dimension is Kimball's vocabulary; Inmon/Data-Vault records
+            # have no such distinction — n/a is an explicit, always-required
+            # declaration rather than a silent skip (issue-16 before-landing
+            # warrant hunt: an unqualified fact/dimension-only enum blocked
+            # every well-formed Data Vault record outright).
+            missing.append("table_type must be 'fact', 'dimension', or 'n/a' (got %r)" % tt.group(1).strip())
+        if not re.search(r'^\s*grain\s*:', new_text, re.I | re.M):
+            missing.append("grain (required record field, labeled line 'grain: ...')")
+        vd = re.search(r'^\s*verdict\s*:\s*(\S+)', new_text, re.I | re.M)
+        if not vd:
+            missing.append("verdict (required record field, labeled line 'verdict: pass|fail')")
+        elif vd.group(1).strip().lower() not in ("pass", "fail"):
+            missing.append("verdict must be 'pass' or 'fail' (got %r)" % vd.group(1).strip())
 
     if missing:
         deny("blocked write to %s — missing: %s" % (rel, "; ".join(missing)))
