@@ -119,7 +119,12 @@ separate section from the ERD.
 steps here.
 
 ## Rollback
-rollback path.'
+rollback path.
+
+table_name: orders_fact
+table_type: fact
+grain: one row per order line
+verdict: pass'
 
 write_case "complete record passes" "docs/issue-9/reports/data-modeling.md" "$GOOD_RECORD" 0
 write_case "record missing data dictionary blocks" "docs/issue-9/reports/data-modeling.md" \
@@ -165,6 +170,22 @@ line 7
 
 ## Unrelated org note
 data-engineering is a different team entirely, mentioned only here." 2
+
+write_case "record missing table_name blocks" "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | grep -v '^table_name:')" 2
+write_case "record missing table_type blocks" "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | grep -v '^table_type:')" 2
+write_case "record missing grain blocks" "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | grep -v '^grain:')" 2
+write_case "record missing verdict blocks" "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | grep -v '^verdict:')" 2
+write_case "record with out-of-enum table_type blocks" "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | sed 's/^table_type: fact/table_type: bridge/')" 2
+write_case "record with out-of-enum verdict blocks" "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | sed 's/^verdict: pass/verdict: maybe/')" 2
+write_case "Data Vault record with table_type: n/a passes (no fact/dimension distinction)" \
+  "docs/issue-9/reports/data-modeling.md" \
+  "$(printf '%s' "$GOOD_RECORD" | sed 's/^table_type: fact/table_type: n\/a/')" 0
 
 write_case "unrelated path is untouched" "src/app.py" "anything" 0
 

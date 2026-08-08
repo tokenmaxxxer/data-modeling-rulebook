@@ -28,6 +28,30 @@ model artifacts (or an explicit, justified statement of which layer(s) a
 specific change doesn't touch) — a deliverable that jumps straight to
 physical DDL with no conceptual/logical trace does not satisfy this norm.
 
+### Spec fields
+
+Layered onto this rulebook from the realized marketplace spec
+`roles/specs/data-modeling.spec.json` (program #521-#525, on-the-record).
+Every phase-2 record (`docs/issue-<n>/reports/data-modeling.md`) must
+carry these four required fields:
+
+| Field | Type/enum |
+|---|---|
+| `table_name` | string |
+| `table_type` | `fact` \| `dimension` \| `n/a` (Inmon/Data-Vault records, which have no fact/dimension distinction, must still declare `n/a` explicitly rather than omit the field) |
+| `grain` | string |
+| `verdict` | `pass` \| `fail` |
+
+`loop_state` vocabulary (spec-exact, no stale/extra states):
+
+| State | Kind | When |
+|---|---|---|
+| `modeling` | progress | actively drafting conceptual/logical/physical artifacts |
+| `reviewing` | progress | artifacts drafted, awaiting review before landing |
+| `landed` | terminal | record merged, deliverable complete |
+| `grain-undeclared` | refusal | the record cannot state a `grain` — refuse rather than guess one |
+| `table-unreachable` | error | the target table/schema cannot be reached to verify against (e.g. connection/permission failure) |
+
 ## Install
 
 ```
