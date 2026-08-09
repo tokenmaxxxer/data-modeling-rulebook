@@ -23,20 +23,38 @@ Run it with `bash tests/run-all-gate-tests.sh` from the repo root. It exits
 non-zero if any suite fails and prints which one.
 
 `tests/resolve-core.sh` (sourced by every plugin's own test suite plus
-`tests/run-all-gate-tests.sh` itself) resolves `CLAUDE_PLUGIN_ROOT_CORE` for
-standalone test runs — an already-exported value first (a real install or a
-developer's own local `core` checkout), else a one-time shallow clone of
-`tokenmaxxxer-core` into a cache directory. If neither resolves,
-`run-all-gate-tests.sh` now **fails loud** (issue-13 §4): a run where
-`compliance-check.sh` never executed cannot print `all suites passed` /
-exit 0 — "best-effort" no longer means "silently skip and still call it
-green." A genuinely offline dev environment must export a pre-resolved
-`CLAUDE_PLUGIN_ROOT_CORE` (or allow `resolve-core.sh`'s network clone) to
-get a passing run. `tests/missing-core-test.sh` is the dedicated,
-separately-invoked test for this fail-path (stubs `CLAUDE_PLUGIN_ROOT_CORE`
-to a nonexistent path and asserts non-zero exit) — it is not part of the
-default `run-all-gate-tests.sh` run, so the missing-core path is exercised
-on its own rather than as the default (real-core) run path.
+`tests/run-all-gate-tests.sh` itself) implements the canonical test-env
+resolution convention (`docs/specs/test-env-resolution.md`, issue #551,
+adopted issue-19) via the vendored `tests/env_resolve.py`: resolution
+order is `CLAUDE_PLUGIN_ROOT_CORE` (re-validated for a non-empty
+`hooks/lib/gate-lib.sh`, never trusted blindly) -> the sibling candidates
+`../core` and `../../core` -> an explicit SKIP, distinct from a real
+failure (message `SKIP: core plugin unreachable — unverifiable outside
+spawn env`, exit code 75). As a repo-local extension layered *before* the
+canonical resolver call, a best-effort one-time shallow clone of
+`tokenmaxxxer-core` into a tmp cache dir is still attempted first when no
+already-valid `CLAUDE_PLUGIN_ROOT_CORE` and no sibling checkout exists, so
+a developer machine with network access but no sibling checkout still
+resolves real assertions exactly as before the convention's adoption.
+
+`resolve-core.sh` exports `TEST_ENV_SKIP=1` (and leaves
+`CLAUDE_PLUGIN_ROOT_CORE` unset) on the SKIP outcome instead of the old
+"best-effort, fail loud on total unresolvability" (issue-13 §4) behavior.
+`run-all-gate-tests.sh` and each of the four per-plugin suites check
+`TEST_ENV_SKIP` immediately after sourcing `resolve-core.sh` and, if set,
+print the SKIP message (referencing `docs/specs/test-env-resolution.md`)
+and exit 75 before running any assertion or the trailing
+`compliance-check.sh` block — a genuinely unreachable core is a SKIP, not
+a misleading FAIL. `tests/missing-core-test.sh` is the dedicated,
+separately-invoked test for this SKIP path: it isolates `TMPDIR` and
+stubs `git` to always fail (so ambient sibling/cache/network state can't
+mask a forced-unresolvable `CLAUDE_PLUGIN_ROOT_CORE`) and asserts exit 75
+specifically, matching the convention's SKIP contract — it is not part of
+the default `run-all-gate-tests.sh` run, so the SKIP path is exercised on
+its own rather than as the default (real-core) run path. A real defect in
+a gate script (not an environment gap) still surfaces as a FAIL, never
+masked under SKIP — every assertion that runs when core resolves is
+unchanged.
 
 ## Adding a plugin's suite to the aggregator
 
@@ -106,8 +124,9 @@ reference-only, never vendored — `core/hooks/lib/gate-lib.sh` /
   3 lines of each other, not merely both present anywhere in the record.
 
 `tests/resolve-core.sh` resolves `CLAUDE_PLUGIN_ROOT_CORE` for standalone
-test runs (honors an already-set value; otherwise shallow-clones
-`tokenmaxxxer-core` into a cache dir) so these gates — and
+test runs per the canonical test-env resolution convention described
+above (env var -> sibling candidates -> SKIP, with a network-clone
+extension layered before it) so these gates — and
 `tests/run-all-gate-tests.sh`'s own `compliance-check.sh` pass against
 each plugin's `hooks/` dir — can run outside a full Claude Code plugin
 install.

@@ -1,24 +1,47 @@
 #!/usr/bin/env bash
 # Resolves CLAUDE_PLUGIN_ROOT_CORE so the gate test suites can run
 # standalone (`bash <plugin>/tests/*.sh` outside a Claude Code session
-# where a plugin installer would normally set it), without vendoring
-# core/hooks/lib/gate-lib.sh|py into this repo (canon reference-only, per
-# docs/handbooks/canon-scripts.md).
+# where a plugin installer would normally set it).
 #
-# Honors an already-exported CLAUDE_PLUGIN_ROOT_CORE first (a real
-# install, or a developer's own local `core` checkout). Otherwise
-# shallow-clones tokenmaxxxer-core into a cache directory (once) and
-# points at its core/ subdirectory. Sourced by each plugin's own test
-# suite and by tests/run-all-gate-tests.sh.
-if [ -z "${CLAUDE_PLUGIN_ROOT_CORE:-}" ]; then
-  _resolve_core_cache="${TMPDIR:-/tmp}/tokenmaxxxer-core-canon-cache"
-  if [ ! -f "$_resolve_core_cache/core/hooks/lib/gate-lib.sh" ]; then
-    rm -rf "$_resolve_core_cache"
-    git clone -q --depth 1 https://github.com/tokenmaxxxer/tokenmaxxxer-core.git \
-      "$_resolve_core_cache" >/dev/null 2>&1 || true
-  fi
-  if [ -f "$_resolve_core_cache/core/hooks/lib/gate-lib.sh" ]; then
-    export CLAUDE_PLUGIN_ROOT_CORE="$_resolve_core_cache/core"
-  fi
-  unset _resolve_core_cache
+# Implements the canonical test-env resolution convention
+# (docs/specs/test-env-resolution.md, issue #551) via the vendored
+# tests/env_resolve.py: env var (validated non-empty gate-lib.sh) ->
+# caller-supplied sibling candidates -> explicit SKIP (exit 75), never a
+# misleading FAIL. Always re-validates CLAUDE_PLUGIN_ROOT_CORE through the
+# resolver rather than trusting it blindly, so a bogus/unresolvable value
+# (e.g. a test forcing a nonexistent path) reaches the SKIP contract
+# instead of silently passing through. As a repo-local extension layered
+# *before* the canonical resolver call (the convention explicitly allows
+# this), a best-effort network clone of tokenmaxxxer-core into a tmp cache
+# is attempted first when no already-valid CLAUDE_PLUGIN_ROOT_CORE and no
+# sibling candidate exists locally, so a developer machine with no
+# sibling checkout but network access still resolves real assertions
+# exactly as before; only a genuinely offline/no-sibling environment
+# reaches SKIP.
+_resolve_core_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+_resolve_core_cache="${TMPDIR:-/tmp}/tokenmaxxxer-core-canon-cache"
+if [ ! -s "${CLAUDE_PLUGIN_ROOT_CORE:-/nonexistent}/hooks/lib/gate-lib.sh" ] \
+   && [ ! -f "$_resolve_core_root/../core/hooks/lib/gate-lib.sh" ] \
+   && [ ! -f "$_resolve_core_root/../../core/hooks/lib/gate-lib.sh" ] \
+   && [ ! -f "$_resolve_core_cache/core/hooks/lib/gate-lib.sh" ]; then
+  rm -rf "$_resolve_core_cache"
+  git clone -q --depth 1 https://github.com/tokenmaxxxer/tokenmaxxxer-core.git \
+    "$_resolve_core_cache" >/dev/null 2>&1 || true
 fi
+
+_resolve_core_result="$(python3 "$_resolve_core_root/tests/env_resolve.py" \
+  "$_resolve_core_root/../core" \
+  "$_resolve_core_root/../../core" \
+  "$_resolve_core_cache/core" 2>&1)"
+_resolve_core_status=$?
+
+if [ "$_resolve_core_status" = "0" ]; then
+  export CLAUDE_PLUGIN_ROOT_CORE="$_resolve_core_result"
+  unset TEST_ENV_SKIP
+else
+  unset CLAUDE_PLUGIN_ROOT_CORE
+  export TEST_ENV_SKIP=1
+  echo "$_resolve_core_result (see docs/specs/test-env-resolution.md)" >&2
+fi
+
+unset _resolve_core_root _resolve_core_cache _resolve_core_result _resolve_core_status

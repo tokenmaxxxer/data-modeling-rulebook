@@ -8,6 +8,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 . "$ROOT/tests/resolve-core.sh"
 fail=0
 
+if [ -n "${TEST_ENV_SKIP:-}" ]; then
+  echo "SKIP: core plugin unreachable — unverifiable outside spawn env (see docs/specs/test-env-resolution.md)" >&2
+  exit 75
+fi
+
 if [ -n "${CLAUDE_PLUGIN_ROOT_CORE:-}" ] && [ -f "$CLAUDE_PLUGIN_ROOT_CORE/hooks/tests/compliance-check.sh" ]; then
   for plugin in data-modeling-structure data-modeling-inmon data-modeling-kimball data-modeling-datavault; do
     echo "== compliance-check: $plugin =="

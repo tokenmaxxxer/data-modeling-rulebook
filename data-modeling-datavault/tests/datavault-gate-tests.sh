@@ -4,6 +4,10 @@ set -u
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../hooks" && pwd -P)"
 GATE="$DIR/datavault-gate.sh"
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)/tests/resolve-core.sh"
+if [ -n "${TEST_ENV_SKIP:-}" ]; then
+  echo "SKIP: core plugin unreachable — unverifiable outside spawn env (see docs/specs/test-env-resolution.md)" >&2
+  exit 75
+fi
 fail=0
 
 TMPROOT="$(mktemp -d)"
