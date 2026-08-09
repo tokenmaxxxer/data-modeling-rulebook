@@ -1,9 +1,17 @@
 ---
-code_under_review: PENDING
+code_under_review:
+  - tests/env_resolve.py
+  - tests/resolve-core.sh
+  - tests/run-all-gate-tests.sh
+  - tests/missing-core-test.sh
+  - data-modeling-structure/tests/structure-gate-tests.sh
+  - data-modeling-inmon/tests/inmon-gate-tests.sh
+  - data-modeling-kimball/tests/kimball-gate-tests.sh
+  - data-modeling-datavault/tests/datavault-gate-tests.sh
 type: chore
 breaking: false
 verdict: PENDING
-loop_state: committing
+loop_state: landed
 ---
 
 # Implementation record — issue #19
