@@ -17,13 +17,21 @@
 # sibling candidate exists locally, so a developer machine with no
 # sibling checkout but network access still resolves real assertions
 # exactly as before; only a genuinely offline/no-sibling environment
-# reaches SKIP.
+# reaches SKIP. A pre-existing cache is always replaced with a fresh
+# clone, never reused as-is: env_resolve.py's reachability check only
+# confirms gate-lib.sh is present and non-empty, not that it is current,
+# so a cache left over from before an upstream core change (e.g.
+# issue-75's gate_bash_write_targets) would otherwise resolve as
+# "reachable" while actually stale, turning a real upstream addition
+# into a misleading FAIL instead of the convention's SKIP/pass-through.
+# (A plain `git pull` was tried first but does not self-heal a detached-
+# HEAD shallow clone left at an old commit — the exact shape this cache
+# takes — so re-cloning fresh is the reliable fix.)
 _resolve_core_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 _resolve_core_cache="${TMPDIR:-/tmp}/tokenmaxxxer-core-canon-cache"
 if [ ! -s "${CLAUDE_PLUGIN_ROOT_CORE:-/nonexistent}/hooks/lib/gate-lib.sh" ] \
    && [ ! -f "$_resolve_core_root/../core/hooks/lib/gate-lib.sh" ] \
-   && [ ! -f "$_resolve_core_root/../../core/hooks/lib/gate-lib.sh" ] \
-   && [ ! -f "$_resolve_core_cache/core/hooks/lib/gate-lib.sh" ]; then
+   && [ ! -f "$_resolve_core_root/../../core/hooks/lib/gate-lib.sh" ]; then
   rm -rf "$_resolve_core_cache"
   git clone -q --depth 1 https://github.com/tokenmaxxxer/tokenmaxxxer-core.git \
     "$_resolve_core_cache" >/dev/null 2>&1 || true
