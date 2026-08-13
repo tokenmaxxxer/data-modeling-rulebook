@@ -95,6 +95,10 @@ Five plugins, each independently installable/kill-switchable
 - `data-modeling-datavault/` — Data Vault methodology content gate (fires
   only when the write names `data vault`).
   - `hooks/datavault-gate.sh`. Kill switch: `DATA_MODELING_DATAVAULT_GATE_OFF`.
+- `playbook/` — operational decision-rule content (issue #1174): one
+  file per decision axis — `structure.md`, `inmon.md`, `kimball.md`,
+  `datavault.md` — each a condition -> choice -> source rule table with
+  a front-matter `axis:`/`rule_count_floor:` pair.
 - `docs/specs/approvers.md` — Approve-authority allowlist (see below)
 - `tests/run-all-gate-tests.sh` — aggregator: runs all four gate plugins'
   own test suites plus core's `compliance-check.sh` against each
