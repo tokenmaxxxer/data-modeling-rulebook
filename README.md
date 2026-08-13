@@ -28,6 +28,26 @@ model artifacts (or an explicit, justified statement of which layer(s) a
 specific change doesn't touch) — a deliverable that jumps straight to
 physical DDL with no conceptual/logical trace does not satisfy this norm.
 
+Every phase-2 deliverable must also state its grain and constraints as
+at least one machine-checkable assertion (a `not_null`/`unique`/
+`relationships`-style column check, a row-count or referential-integrity
+check, or an equivalent executable assertion) — prose normalization
+rationale alone does not satisfy this norm; the assertion is what a
+reviewer or gate actually runs, not just reads.
+
+Any ERD/diagram artifact a deliverable ships must be reproducible from
+its own source: either generated directly from the DDL/migration it
+accompanies, or committed as a diffable text format (e.g. DBML or an
+equivalent markup) alongside the migration it documents. A standalone
+image with no reproducible source does not satisfy this norm.
+
+For the Data Vault row specifically, hub/link/satellite columns follow
+a fixed naming floor so artifacts from different deliverables stay
+structurally comparable: hash keys as `<entity>_hk`, hash diffs (on
+satellites) as `<entity>_hd`, and load metadata as `load_date` +
+`record_source` at minimum. A deliverable may add columns but must not
+rename or drop these four.
+
 ### Spec fields
 
 Layered onto this rulebook from the realized marketplace spec
