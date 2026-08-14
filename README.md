@@ -48,6 +48,64 @@ satellites) as `<entity>_hd`, and load metadata as `load_date` +
 `record_source` at minimum. A deliverable may add columns but must not
 rename or drop these four.
 
+### Tool-learnings (Claude Code plugins)
+
+Bounded fold-in from a Claude Code plugin/skill-ecosystem survey
+(issue-1199, 2026-08-14 amendment; adoption-evidence method — stars,
+multi-source mentions). Each entry: tool, adoption evidence, problem,
+how, and which rule above it upgrades. This section stays capped at
+four entries; a fifth candidate replaces the weakest existing one
+rather than growing the list.
+
+1. **anthropics/claude-plugins-official** (33,504 GitHub stars —
+   `gh api repos/anthropics/claude-plugins-official`, checked
+   2026-08-14) — its bundled "Data Engineering for Apache Airflow" and
+   "Google Cloud Data Engineering" plugins. Problem: migrations authored
+   in isolation lose lineage/impact visibility. How: both plugins ship
+   lineage-tracing and table-profiling as first-class commands
+   alongside migration authoring, not as a separate manual step.
+   Learning → upgrades the machine-checkable-assertion rule above: a
+   migration's assertion set must include at least one referential/
+   lineage-impact check (what downstream reads this table), not only
+   local `not_null`/`unique` checks.
+
+2. **rohitg00/awesome-claude-code-toolkit** (2,501 stars —
+   `gh api repos/rohitg00/awesome-claude-code-toolkit`, checked
+   2026-08-14), specifically its `schema-designer` plugin's
+   `generate-erd` command. Problem: hand-drawn ERDs drift from the
+   schema they document. How: generates a Mermaid ERD directly from
+   live DB/ORM models/migrations into a diffable `docs/erd.md`, so the
+   diagram regenerates instead of being hand-maintained. Learning →
+   sharpens the reproducible-ERD rule above: the default diffable
+   format is Mermaid (or DBML) committed at a fixed path alongside the
+   migration, not an arbitrary text format left to the deliverable.
+
+3. **Prisma ORM Development skill** (multi-source: listed on
+   claudedirectory.org, mcpmarket.com, and superchargeclaudecode.com —
+   checked 2026-08-14; Prisma itself is a widely-adopted TypeScript
+   ORM). Problem: a schema and its consuming type-safe client drift
+   apart when the client isn't regenerated with the schema change. How:
+   couples schema edits to an atomic type-safe client/migration
+   regeneration step rather than treating codegen as a manual follow-up.
+   Learning → new rule: every phase-2 schema deliverable must name its
+   consuming codegen/type-safe boundary (what regenerates from this
+   schema, e.g. an ORM client or a typed query layer) so drift surfaces
+   at build time, not at review time.
+
+4. **jeremylongshore/claude-code-plugins-plus-skills** (2,630 stars —
+   `gh api repos/jeremylongshore/claude-code-plugins-plus-skills`,
+   checked 2026-08-14), representative of the marketplace's database-
+   migration skill pattern (paired with MariaDB's own skills repo for
+   the same pattern). Problem: forward-only migrations leave rollback
+   as an afterthought, undermining the rollback path this rulebook's
+   `produces` line already promises. How: these skills generate a
+   rollback script paired with every forward migration script as one
+   atomic artifact, not a prose rollback plan. Learning → new rule:
+   a migration plan's rollback path must be a runnable script/step
+   committed alongside the forward migration, not prose describing how
+   to roll back; "revert this commit" alone satisfies it only when the
+   commit contains no data-destructive step.
+
 ### Spec fields
 
 Layered onto this rulebook from the realized marketplace spec
